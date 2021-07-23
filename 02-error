@@ -1,7 +1,7 @@
 不应该wrap，应该在dao层就需要处理这个错误，server层并不需要关心这个错误，只需要返回空数组即可
 
 
-var modeldata []Model
+var dao []Dao
 if err == sql.ErrNoRows{
-  return modeldata
+  return dao
 }

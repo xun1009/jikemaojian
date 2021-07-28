@@ -1,0 +1,53 @@
+src.go
+
+func SingleHandle(ctx context.Context) error{
+	c := make(chan os.Signal)
+	signal.Notify(c)
+	for s := range c{
+		switch s {
+		case syscall.SIGQUIT:
+			fmt.Println("receive sigquit")
+			return errors.New("single quit")
+		case syscall.SIGINT:
+			fmt.Println("receive SIGINT")
+			return errors.New("single quit")
+		}
+	}
+	return nil
+}
+
+func StartServer(ctx context.Context) error {
+	http.HandleFunc("/",index)
+	if err := http.ListenAndServe("127.0.0.1:9999",nil); err !=nil{
+		return errors.New("server error")
+	}
+	return nil
+}
+
+func index(writer http.ResponseWriter, request *http.Request) {
+	fmt.Println("haha")
+	writer.Write([]byte("haha"))
+}
+//0---------------------
+mian.go
+
+func main()  {
+	ctx,cancel := context.WithCancel(context.Background())
+	defer cancel()
+	group,groupCtx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		return src.SingleHandle(groupCtx)
+	})
+
+	group.Go(func() error {
+		return src.StartServer(groupCtx)
+	})
+
+	if err := group.Wait(); err != nil {
+		fmt.Println("Get errors: ", err)
+	}else {
+		fmt.Println("Get all num successfully!")
+	}
+
+}
